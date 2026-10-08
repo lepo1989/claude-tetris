@@ -25,6 +25,7 @@ Implementación del clásico **Tetris** en JavaScript vanilla, usando HTML5 Canv
   - [Tecnologías](#tecnologías)
   - [Estructura del proyecto](#estructura-del-proyecto)
   - [Personalización](#personalización)
+  - [Integración con GitHub (Claude Code)](#integración-con-github-claude-code)
   - [Licencia](#licencia)
 
 ---
@@ -156,6 +157,10 @@ Cuando una pieza recién generada ya colisiona al aparecer (`spawn`), se dispara
 
 ```
 03-tetris/
+├── .github/
+│   └── workflows/  # @claude, revisión de PRs y triaje de issues
+├── docs/
+│   └── GUIA-INTEGRACION-GITHUB.md
 ├── index.html      # Estructura del DOM y canvas
 ├── style.css       # Estilos del juego (dark theme)
 ├── game.js         # Toda la lógica del Tetris (~300 líneas)
@@ -178,6 +183,18 @@ Algunos parámetros fáciles de tunear en `game.js`:
 | `dropInterval` | Velocidad inicial de caída en ms         | `1000`                |
 
 > Si cambias `COLS`, `ROWS` o `BLOCK`, recuerda ajustar también `width` y `height` del `<canvas id="board">` en `index.html` para que coincida (`COLS × BLOCK` × `ROWS × BLOCK`).
+
+---
+
+## Integración con GitHub (Claude Code)
+
+El repositorio está conectado con **Claude Code** mediante GitHub Actions:
+
+- Menciona `@claude` en un issue o PR para pedirle cambios o preguntas.
+- Cada Pull Request recibe una revisión automática con comentarios en línea.
+- Cada issue nuevo o editado recibe labels (tipo, prioridad, área) y un diagnóstico técnico para implementarlo después.
+
+Los pasos de instalación, los workflows creados y cómo usarlos están en [`docs/GUIA-INTEGRACION-GITHUB.md`](docs/GUIA-INTEGRACION-GITHUB.md).
 
 ---
 
