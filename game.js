@@ -39,6 +39,8 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
+const themeToggle = document.getElementById('theme-toggle');
+const THEME_KEY = 'tetris-theme';
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
@@ -169,7 +171,7 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
 }
 
 function drawGrid() {
-  ctx.strokeStyle = '#22222e';
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid').trim();
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -216,6 +218,16 @@ function drawNext() {
   for (let r = 0; r < shape.length; r++)
     for (let c = 0; c < shape[r].length; c++)
       drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NB);
+}
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* almacenamiento no disponible */ }
+  const light = theme === 'light';
+  themeToggle.setAttribute('aria-pressed', String(light));
+  themeToggle.textContent = light ? 'Modo oscuro' : 'Modo claro';
+  // repintar aunque el bucle esté detenido (pausa / game over)
+  if (current) { draw(); drawNext(); }
 }
 
 function endGame() {
@@ -300,5 +312,15 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+themeToggle.addEventListener('click', () => {
+  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+  themeToggle.blur(); // evita que Space active el botón
+});
+
+// Fuera de init(): reiniciar la partida no cambia el tema
+let savedTheme = null;
+try { savedTheme = localStorage.getItem(THEME_KEY); } catch (e) { /* ignorar */ }
+applyTheme(savedTheme === 'light' ? 'light' : 'dark');
 
 init();
