@@ -40,9 +40,12 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Soft drop** (bajada acelerada) y **hard drop** (caída instantánea).
 - **Pieza fantasma** (_ghost piece_): muestra dónde aterrizará la pieza actual.
 - **Vista previa** de la siguiente pieza.
+- **Hold** (reserva): guarda la pieza actual con `C` o `Shift` para usarla más tarde, o intercámbiala con la ya guardada. Solo se puede usar una vez por pieza; el slot se atenúa mientras está bloqueado.
 - **Sistema de puntuación** clásico de Tetris (100 / 300 / 500 / 800 multiplicado por nivel).
+- **Animación de borrado de líneas**: las filas completas destellan y se deshacen del centro hacia fuera, y los puntos ganados (`+800`, con la etiqueta SINGLE / DOUBLE / TRIPLE / TETRIS!) suben flotando sobre el tablero.
 - **Niveles** que aumentan cada 10 líneas y aceleran la caída.
 - **Pausa** y **Game Over** con opción de reinicio.
+- **Máximos puntajes**: se guardan los 5 mejores en `localStorage`. Se muestran en la pantalla de Game Over, con la partida recién jugada resaltada, y en un modal que se abre con la tecla `M` y pausa el juego mientras está abierto.
 - **Tema claro / oscuro**: oscuro por defecto; se cambia con el selector `DARK / LIGHT` del panel lateral o con la tecla `T`, y se recuerda en `localStorage`.
 
 ---
@@ -86,7 +89,9 @@ Después abre `http://localhost:8000` en el navegador.
 | `↑` o `X` | Rotar la pieza en sentido horario |
 | `↓`       | Soft drop (bajar más rápido)      |
 | `Espacio` | Hard drop (caída instantánea)     |
+| `C` o `Shift` | Guardar / intercambiar pieza (hold) |
 | `P`       | Pausar / reanudar                 |
+| `M`       | Ver máximos puntajes (pausa el juego; `M` o `Esc` para cerrar) |
 | `T`       | Alternar tema claro / oscuro      |
 
 ---
@@ -100,7 +105,7 @@ El juego se compone de tres archivos que cooperan:
 Define la estructura visual:
 
 - Un `<canvas id="board">` de **300 × 600** píxeles donde se renderiza el tablero.
-- Un panel lateral con `SCORE`, `LINES`, `LEVEL`, vista de la siguiente pieza y la lista de controles.
+- Un panel izquierdo con la pieza reservada (`HOLD`) y la lista de controles, y un panel derecho con `SCORE`, `LINES`, `LEVEL`, la siguiente pieza (`NEXT`) y el selector de tema. Ambos paneles tienen el mismo ancho, así el tablero y el título quedan centrados.
 - Un overlay para los estados **PAUSA** y **GAME OVER**.
 
 ### 2. `style.css`

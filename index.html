@@ -11,6 +11,27 @@
 
   <div class="wrapper">
     <div class="game-container">
+      <aside class="panel panel-left">
+        <div class="panel-section">
+          <span class="label">HOLD</span>
+          <canvas id="hold-canvas" width="120" height="120"></canvas>
+        </div>
+
+        <div class="panel-section controls">
+          <span class="label">CONTROLS</span>
+          <ul>
+            <li><kbd>←</kbd><kbd>→</kbd> mover</li>
+            <li><kbd>↑</kbd> rotar</li>
+            <li><kbd>↓</kbd> bajar</li>
+            <li><kbd>Space</kbd> caída</li>
+            <li><kbd>C</kbd><kbd>Shift</kbd> reservar</li>
+            <li><kbd>P</kbd> pausa</li>
+            <li><kbd>M</kbd> puntajes</li>
+            <li><kbd>T</kbd> tema</li>
+          </ul>
+        </div>
+      </aside>
+
       <canvas id="board" width="300" height="600"></canvas>
 
       <aside class="panel">
@@ -40,17 +61,6 @@
           </div>
         </div>
 
-        <div class="panel-section controls">
-          <span class="label">CONTROLS</span>
-          <ul>
-            <li><kbd>←</kbd><kbd>→</kbd> mover</li>
-            <li><kbd>↑</kbd> rotar</li>
-            <li><kbd>↓</kbd> bajar</li>
-            <li><kbd>Space</kbd> caída</li>
-            <li><kbd>P</kbd> pausa</li>
-            <li><kbd>T</kbd> tema</li>
-          </ul>
-        </div>
       </aside>
     </div>
 
@@ -58,7 +68,17 @@
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
+        <p id="overlay-record"></p>
+        <ol id="overlay-scores" class="scores hidden"></ol>
         <button id="restart-btn">Reiniciar</button>
+      </div>
+    </div>
+
+    <div id="scores-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="scores-title">
+      <div class="overlay-box">
+        <p id="scores-title">MEJORES PUNTAJES</p>
+        <ol id="scores-list" class="scores"></ol>
+        <button id="scores-close-btn" type="button">Cerrar <kbd>M</kbd></button>
       </div>
     </div>
   </div>
