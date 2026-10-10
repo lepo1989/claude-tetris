@@ -39,7 +39,7 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
-const themeToggle = document.getElementById('theme-toggle');
+const themeButtons = document.querySelectorAll('[data-theme-option]');
 const THEME_KEY = 'tetris-theme';
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
@@ -223,11 +223,13 @@ function drawNext() {
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* almacenamiento no disponible */ }
-  const light = theme === 'light';
-  themeToggle.setAttribute('aria-pressed', String(light));
-  themeToggle.textContent = light ? 'Modo oscuro' : 'Modo claro';
+  themeButtons.forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.themeOption === theme)));
   // repintar aunque el bucle esté detenido (pausa / game over)
   if (current) { draw(); drawNext(); }
+}
+
+function toggleTheme() {
+  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
 }
 
 function endGame() {
@@ -288,6 +290,7 @@ function init() {
 
 document.addEventListener('keydown', e => {
   if (e.code === 'KeyP') { togglePause(); return; }
+  if (e.code === 'KeyT') { toggleTheme(); return; }
   if (paused || gameOver) return;
   switch (e.code) {
     case 'ArrowLeft':
@@ -313,10 +316,10 @@ document.addEventListener('keydown', e => {
 
 restartBtn.addEventListener('click', init);
 
-themeToggle.addEventListener('click', () => {
-  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
-  themeToggle.blur(); // evita que Space active el botón
-});
+themeButtons.forEach(btn => btn.addEventListener('click', () => {
+  applyTheme(btn.dataset.themeOption);
+  btn.blur(); // evita que Space active el botón
+}));
 
 // Fuera de init(): reiniciar la partida no cambia el tema
 let savedTheme = null;

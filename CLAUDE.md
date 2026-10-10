@@ -1,4 +1,4 @@
-/# CLAUDE.md
+# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -27,7 +27,7 @@ Key conventions that span several functions:
 - **Game loop:** `loop()` uses `requestAnimationFrame` and accumulates `dt` into `dropAccum` to drive gravity. Pausing and game over stop the loop with `cancelAnimationFrame(animId)`. Resuming resets `lastTime` before it restarts the loop.
 - **Rendering** redraws the whole board on every frame (`draw()`). The next-piece preview is redrawn only in `spawn()` (`drawNext()`), and the HUD only through `updateHUD()`.
 
-- **Theming:** colors live in CSS variables in `style.css` (`:root` = dark, `[data-theme="light"]` = light). `applyTheme(theme)` in `game.js` sets `document.documentElement.dataset.theme`, persists it in `localStorage` (`tetris-theme`) and repaints with `draw()`/`drawNext()` so it also works while paused or on game over. It is called outside `init()` so restarting keeps the theme. `drawGrid()` reads `--grid` from CSS; any new canvas color should do the same.
+- **Theming:** colors live in CSS variables in `style.css` (`:root` = dark, `[data-theme="light"]` = light). `applyTheme(theme)` in `game.js` sets `document.documentElement.dataset.theme`, persists it in `localStorage` (`tetris-theme`) and repaints with `draw()`/`drawNext()` so it also works while paused or on game over. It is triggered by the `DARK / LIGHT` buttons (`[data-theme-option]`) in the side panel and by the `T` key (`toggleTheme()`), which is handled before the paused/game-over early return. It is called outside `init()` so restarting keeps the theme. `drawGrid()` reads `--grid` from CSS; any new canvas color should do the same.
 
 ## Gotchas
 

@@ -7,8 +7,6 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <button id="theme-toggle" type="button" aria-pressed="false">Modo claro</button>
-
   <h1 class="title">TETRIS</h1>
 
   <div class="wrapper">
@@ -34,6 +32,14 @@
           <canvas id="next-canvas" width="120" height="120"></canvas>
         </div>
 
+        <div class="panel-section">
+          <span class="label">THEME</span>
+          <div class="theme-switch" role="group" aria-label="Tema">
+            <button type="button" data-theme-option="dark" aria-pressed="true">DARK</button>
+            <button type="button" data-theme-option="light" aria-pressed="false">LIGHT</button>
+          </div>
+        </div>
+
         <div class="panel-section controls">
           <span class="label">CONTROLS</span>
           <ul>
@@ -42,6 +48,7 @@
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
             <li><kbd>P</kbd> pausa</li>
+            <li><kbd>T</kbd> tema</li>
           </ul>
         </div>
       </aside>

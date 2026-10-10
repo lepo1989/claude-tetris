@@ -146,23 +146,45 @@ kbd {
   color: var(--kbd-text);
 }
 
-/* ---- Interruptor de tema ---- */
-#theme-toggle {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: var(--canvas-bg);
-  color: var(--text);
+/* ---- Selector de tema ---- */
+.theme-switch {
+  display: flex;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
+  border-radius: 4px;
+  background: var(--canvas-bg);
+  overflow: hidden;
 }
 
-#theme-toggle:hover {
-  border-color: var(--accent);
+.theme-switch button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 6px 0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--label);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.theme-switch button + button {
+  border-left: 1px solid var(--border);
+}
+
+.theme-switch button:hover {
+  color: var(--accent);
+}
+
+.theme-switch button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.theme-switch button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 /* ---- Overlay ---- */

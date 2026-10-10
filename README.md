@@ -43,7 +43,7 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Sistema de puntuación** clásico de Tetris (100 / 300 / 500 / 800 multiplicado por nivel).
 - **Niveles** que aumentan cada 10 líneas y aceleran la caída.
 - **Pausa** y **Game Over** con opción de reinicio.
-- **Tema claro / oscuro**: oscuro por defecto; el botón de la esquina superior derecha alterna el tema y se recuerda en `localStorage`.
+- **Tema claro / oscuro**: oscuro por defecto; se cambia con el selector `DARK / LIGHT` del panel lateral o con la tecla `T`, y se recuerda en `localStorage`.
 
 ---
 
@@ -87,6 +87,7 @@ Después abre `http://localhost:8000` en el navegador.
 | `↓`       | Soft drop (bajar más rápido)      |
 | `Espacio` | Hard drop (caída instantánea)     |
 | `P`       | Pausar / reanudar                 |
+| `T`       | Alternar tema claro / oscuro      |
 
 ---
 
