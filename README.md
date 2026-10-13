@@ -46,7 +46,10 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Animación de borrado de líneas**: las filas completas destellan y se deshacen del centro hacia fuera, y los puntos ganados (`+800`, con la etiqueta SINGLE / DOUBLE / TRIPLE / TETRIS!) suben flotando sobre el tablero.
 - **Niveles** que aumentan cada 10 líneas y aceleran la caída.
 - **Pausa** y **Game Over** con opción de reinicio.
-- **Máximos puntajes**: se guardan los 5 mejores en `localStorage`. Se muestran en la pantalla de Game Over, con la partida recién jugada resaltada, y en un modal que se abre con la tecla `M` y pausa el juego mientras está abierto.
+- **Pantalla de inicio**: al cargar la página se muestra la tabla de récords y el botón **Jugar** (también `Enter` o `Espacio`); el juego no arranca hasta entonces.
+- **Tabla de récords local**: se guardan las 5 mejores puntuaciones en `localStorage` con el **nombre del jugador**, las líneas, el nivel y el mejor combo de la partida. Si la puntuación entra en el top, al terminar aparece un campo de texto para escribir el nombre (se recuerda el último usado) que se guarda con `Enter` o con **Guardar**; la entrada nueva queda resaltada. La tabla se muestra en la pantalla de inicio, en el Game Over y en un modal que se abre con la tecla `M` (pausa el juego mientras está abierto).
+- **Combos y récords históricos**: un combo cuenta las piezas seguidas que borran líneas (se muestra en el texto flotante como `COMBO x2`, `x3`…). Se guardan aparte el **mejor combo** y el **máximo de líneas** de todas las partidas, entren o no en el top.
+- **Borrar récords**: botón en la pantalla de inicio y en el modal de puntajes (pide confirmación).
 - **Tema claro / oscuro**: oscuro por defecto; se cambia con el selector `DARK / LIGHT` del panel lateral o con la tecla `T`, y se recuerda en `localStorage`.
 
 ---
@@ -94,6 +97,9 @@ Después abre `http://localhost:8000` en el navegador.
 | `P`       | Pausar / reanudar                 |
 | `M`       | Ver máximos puntajes (pausa el juego; `M` o `Esc` para cerrar) |
 | `T`       | Alternar tema claro / oscuro      |
+| `Enter` / `Espacio` | Empezar la partida desde la pantalla de inicio |
+
+Mientras escribes tu nombre en el Game Over, las teclas no controlan el juego.
 
 ---
 
@@ -107,7 +113,7 @@ Define la estructura visual:
 
 - Un `<canvas id="board">` de **300 × 600** píxeles donde se renderiza el tablero.
 - Un panel izquierdo con la pieza reservada (`HOLD`) y la lista de controles, y un panel derecho con `SCORE`, `LINES`, `LEVEL`, la siguiente pieza (`NEXT`) y el selector de tema. Ambos paneles tienen el mismo ancho, así el tablero y el título quedan centrados.
-- Un overlay para los estados **PAUSA** y **GAME OVER**.
+- Un overlay para los estados **PAUSA** y **GAME OVER** (con el campo de nombre y la tabla de récords), la **pantalla de inicio** y el modal de puntajes.
 
 ### 2. `style.css`
 
@@ -130,6 +136,8 @@ Contiene toda la lógica del juego. A grandes rasgos:
 ### Flujo del juego
 
 ```
+pantalla de inicio (sin bucle) ── Jugar / Enter / Espacio ──▶ init()
+
 init()
   ├─ createBoard()                  → matriz vacía
   ├─ next = randomPiece()
@@ -145,7 +153,7 @@ init()
    keydown → mover / rotar / soft-drop / hard-drop / pausa
 ```
 
-Cuando una pieza recién generada ya colisiona al aparecer (`spawn`), se dispara `endGame()` y se muestra el overlay de **Game Over**.
+Cuando una pieza recién generada ya colisiona al aparecer (`spawn`), se dispara `endGame()` y se muestra el overlay de **Game Over**. `endGame()` actualiza los récords históricos (`tetris-stats`) y, si la puntuación entra en el top 5, pide el nombre antes de guardarla en `tetris-highscores`.
 
 ---
 
