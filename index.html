@@ -69,8 +69,14 @@
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
         <p id="overlay-record"></p>
+        <form id="name-form" class="name-form" hidden>
+          <label for="name-input" class="label">TU NOMBRE</label>
+          <input id="name-input" type="text" maxlength="12" autocomplete="off" spellcheck="false" />
+        </form>
         <ol id="overlay-scores" class="scores hidden"></ol>
-        <button id="restart-btn">Reiniciar</button>
+        <div id="overlay-stats" class="stats" hidden></div>
+        <button id="restart-btn" type="button">Reiniciar</button>
+        <button id="reset-btn" class="reset-btn" type="button" hidden>Borrar récords</button>
       </div>
     </div>
 
@@ -106,7 +112,9 @@
       <div class="overlay-box">
         <p id="scores-title">MEJORES PUNTAJES</p>
         <ol id="scores-list" class="scores"></ol>
+        <div id="scores-stats" class="stats"></div>
         <button id="scores-close-btn" type="button">Cerrar <kbd>M</kbd></button>
+        <button id="scores-reset-btn" class="reset-btn" type="button">Borrar récords</button>
       </div>
     </div>
   </div>

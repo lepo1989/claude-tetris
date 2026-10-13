@@ -43,6 +43,10 @@
   padding: 0;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -240,6 +244,10 @@ kbd {
   color: var(--danger);
 }
 
+#overlay[data-mode="start"] #overlay-title {
+  color: var(--accent);
+}
+
 #overlay-score {
   font-family: 'Courier New', Courier, monospace;
   font-size: 14px;
@@ -267,7 +275,7 @@ kbd {
 /* ---- Tabla de máximos puntajes ---- */
 .scores {
   list-style: none;
-  width: 240px;
+  width: 260px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -282,7 +290,8 @@ kbd {
 .scores li {
   display: grid;
   grid-template-columns: 24px 1fr auto;
-  gap: 8px;
+  column-gap: 8px;
+  row-gap: 1px;
   align-items: baseline;
   padding: 4px 8px;
   border-radius: 4px;
@@ -293,6 +302,19 @@ kbd {
 .scores .meta {
   color: var(--muted);
   font-size: 12px;
+}
+
+.scores .name {
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scores .meta {
+  grid-column: 2 / -1;
+  text-align: left;
+  font-size: 11px;
 }
 
 .scores .pts {
@@ -314,6 +336,81 @@ kbd {
   display: block;
   text-align: center;
   color: var(--muted);
+}
+
+/* ---- Mejor combo / líneas máximas ---- */
+.stats {
+  display: flex;
+  gap: 8px;
+  width: 260px;
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--canvas-bg);
+}
+
+.stat-value {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.stat.highlight {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.stat.highlight .label,
+.stat.highlight .stat-value {
+  color: var(--on-accent);
+}
+
+/* ---- Nombre del jugador (game over) ---- */
+.name-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+#name-input {
+  width: 180px;
+  padding: 6px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: var(--canvas-bg);
+  color: var(--text);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  user-select: text;
+}
+
+#name-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.reset-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.reset-btn:hover {
+  color: var(--danger);
 }
 
 #restart-btn,

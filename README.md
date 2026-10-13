@@ -45,8 +45,10 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Sistema de puntuación** clásico de Tetris (100 / 300 / 500 / 800 multiplicado por nivel).
 - **Animación de borrado de líneas**: las filas completas destellan y se deshacen del centro hacia fuera, y los puntos ganados (`+800`, con la etiqueta SINGLE / DOUBLE / TRIPLE / TETRIS!) suben flotando sobre el tablero.
 - **Niveles** que aumentan cada 10 líneas y aceleran la caída.
+- **Pantalla de inicio** con los récords; la partida empieza al pulsar **Jugar**.
 - **Pausa** y **Game Over** con opción de reinicio.
-- **Máximos puntajes**: se guardan los 5 mejores en `localStorage`. Se muestran en la pantalla de Game Over, con la partida recién jugada resaltada, y en un modal que se abre con la tecla `M` y pausa el juego mientras está abierto.
+- **Combos**: piezas seguidas que completan alguna línea. A partir de x2 se muestra `COMBO xN` junto a los puntos.
+- **Tabla de récords**: se guardan en `localStorage` las 5 mejores partidas con nombre del jugador, líneas, nivel y mejor combo, además del **mejor combo** y las **líneas máximas** de todas las partidas. Se muestran en la pantalla de inicio, en el Game Over y en un modal que se abre con la tecla `M` (pausa el juego mientras está abierto). Si la partida entra en el top 5 se resalta y aparece un campo para escribir tu nombre (se recuerda para la siguiente vez). Los récords se pueden borrar desde la pantalla de inicio o el modal.
 - **Tema claro / oscuro**: oscuro por defecto; se cambia con el selector `DARK / LIGHT` del panel lateral o con la tecla `T`, y se recuerda en `localStorage`.
 
 ---
@@ -92,7 +94,7 @@ Después abre `http://localhost:8000` en el navegador.
 | `Espacio` | Hard drop (caída instantánea)     |
 | `C` o `Shift` | Guardar / intercambiar pieza (hold) |
 | `P`       | Pausar / reanudar                 |
-| `M`       | Ver máximos puntajes (pausa el juego; `M` o `Esc` para cerrar) |
+| `M`       | Ver récords (pausa el juego; `M` o `Esc` para cerrar) |
 | `T`       | Alternar tema claro / oscuro      |
 
 ---
@@ -107,7 +109,7 @@ Define la estructura visual:
 
 - Un `<canvas id="board">` de **300 × 600** píxeles donde se renderiza el tablero.
 - Un panel izquierdo con la pieza reservada (`HOLD`) y la lista de controles, y un panel derecho con `SCORE`, `LINES`, `LEVEL`, la siguiente pieza (`NEXT`) y el selector de tema. Ambos paneles tienen el mismo ancho, así el tablero y el título quedan centrados.
-- Un overlay para los estados **PAUSA** y **GAME OVER**.
+- Un overlay compartido para la **pantalla de inicio**, **PAUSA** y **GAME OVER** (con el campo de nombre), y un modal de récords.
 
 ### 2. `style.css`
 
