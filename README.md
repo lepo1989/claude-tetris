@@ -48,6 +48,11 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Pausa** y **Game Over** con opción de reinicio.
 - **Máximos puntajes**: se guardan los 5 mejores en `localStorage`. Se muestran en la pantalla de Game Over, con la partida recién jugada resaltada, y en un modal que se abre con la tecla `M` y pausa el juego mientras está abierto.
 - **Tema claro / oscuro**: oscuro por defecto; se cambia con el selector `DARK / LIGHT` del panel lateral o con la tecla `T`, y se recuerda en `localStorage`.
+- **Skins visuales**: cambian el aspecto de los bloques sin recargar la página, con el selector `SKIN` del panel derecho o con la tecla `K` (rota entre ellas). Se recuerdan en `localStorage` y se combinan con cualquiera de los dos temas:
+  - **Retro**: bloques cuadrados con colores planos (la skin por defecto).
+  - **Neon**: fondo negro y bloques con resplandor (`shadowBlur` del canvas).
+  - **Pastel**: colores suaves y bordes redondeados.
+  - **Pixel art**: cada bloque lleva una textura de píxeles con bisel y tramado.
 
 ---
 
@@ -94,6 +99,7 @@ Después abre `http://localhost:8000` en el navegador.
 | `P`       | Pausar / reanudar                 |
 | `M`       | Ver máximos puntajes (pausa el juego; `M` o `Esc` para cerrar) |
 | `T`       | Alternar tema claro / oscuro      |
+| `K`       | Cambiar de skin (Retro → Neon → Pastel → Pixel) |
 
 ---
 
@@ -106,7 +112,7 @@ El juego se compone de tres archivos que cooperan:
 Define la estructura visual:
 
 - Un `<canvas id="board">` de **300 × 600** píxeles donde se renderiza el tablero.
-- Un panel izquierdo con la pieza reservada (`HOLD`) y la lista de controles, y un panel derecho con `SCORE`, `LINES`, `LEVEL`, la siguiente pieza (`NEXT`) y el selector de tema. Ambos paneles tienen el mismo ancho, así el tablero y el título quedan centrados.
+- Un panel izquierdo con la pieza reservada (`HOLD`) y la lista de controles, y un panel derecho con `SCORE`, `LINES`, `LEVEL`, la siguiente pieza (`NEXT`) y los selectores de tema y de skin. Ambos paneles tienen el mismo ancho, así el tablero y el título quedan centrados.
 - Un overlay para los estados **PAUSA** y **GAME OVER**.
 
 ### 2. `style.css`
@@ -126,6 +132,7 @@ Contiene toda la lógica del juego. A grandes rasgos:
 - **Puntuación**: usa la tabla clásica `[0, 100, 300, 500, 800]` multiplicada por el nivel actual; el hard drop suma 2 puntos por celda recorrida y el soft drop 1 punto por fila.
 - **Nivel y velocidad**: el nivel sube cada 10 líneas; la velocidad de caída se calcula como `max(100, 1000 − (level − 1) × 90)` milisegundos.
 - **Ghost piece** (`ghostY`): proyecta la posición final de la pieza actual hacia abajo y la dibuja con `globalAlpha = 0.2`.
+- **Skins** (`SKINS`): cada skin define su paleta de 7 colores y su propia función de dibujo de bloque. `drawBlock()` delega en la skin activa, así el tablero, el ghost, las vistas previas y la animación de borrado cambian a la vez. `applySkin()` la activa, la guarda en `localStorage` (`tetris-skin`) y repinta aunque el juego esté en pausa o en Game Over.
 
 ### Flujo del juego
 
@@ -186,7 +193,7 @@ Algunos parámetros fáciles de tunear en `game.js`:
 | `COLS`         | Columnas del tablero                     | `10`                  |
 | `ROWS`         | Filas del tablero                        | `20`                  |
 | `BLOCK`        | Tamaño en píxeles de cada celda          | `30`                  |
-| `COLORS`       | Paleta de colores por tipo de pieza      | 7 colores             |
+| `SKINS`        | Paleta (7 colores por tipo de pieza) y función de dibujo de cada skin | `retro`, `neon`, `pastel`, `pixel` |
 | `LINE_SCORES`  | Puntos por 1, 2, 3 o 4 líneas eliminadas | `[0,100,300,500,800]` |
 | `dropInterval` | Velocidad inicial de caída en ms         | `1000`                |
 | `LOCK_DELAY_MS` | Espera en el suelo antes de fijar la pieza (ms) | `500`          |

@@ -6,6 +6,7 @@
   --accent-hover: #9bbdff;
   --on-accent: #0f0f17;
   --canvas-bg: #1a1a25;
+  --board-bg: #1a1a25; /* fondo de los canvas del juego (la skin neon lo cambia) */
   --border: #2a2a3a;
   --grid: #22222e;
   --label: #555570;
@@ -25,6 +26,7 @@
   --accent-hover: #5775ef;
   --on-accent: #ffffff;
   --canvas-bg: #ffffff;
+  --board-bg: #ffffff;
   --border: #c9ccd9;
   --grid: #e3e5ee;
   --label: #6a6d85;
@@ -35,6 +37,14 @@
   --overlay-bg: rgba(242, 243, 248, 0.8);
   --shadow: rgba(0, 0, 0, 0.15);
   --danger: #d32f2f;
+}
+
+/* ---- Skins ----
+   La skin define el aspecto de los bloques (en game.js); neon además fuerza
+   un fondo negro en los canvas con ambos temas. :root[...] gana a [data-theme] */
+:root[data-skin="neon"] {
+  --board-bg: #05050a;
+  --grid: #15152a;
 }
 
 *, *::before, *::after {
@@ -79,7 +89,7 @@ body {
 #board {
   display: block;
   border: 1px solid var(--border);
-  background: var(--canvas-bg);
+  background: var(--board-bg);
   border-radius: 4px;
   box-shadow: 0 0 40px var(--shadow);
 }
@@ -122,7 +132,7 @@ body {
   display: block;
   align-self: flex-start;
   border: 1px solid var(--border);
-  background: var(--canvas-bg);
+  background: var(--board-bg);
   border-radius: 4px;
   transition: opacity 0.15s;
 }
@@ -207,6 +217,23 @@ kbd {
 .theme-switch button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
+}
+
+/* Selector de skin: rejilla 2×2 con separadores de 1px */
+.skin-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+}
+
+.skin-switch button {
+  background: var(--canvas-bg);
+  letter-spacing: 1px;
+}
+
+.theme-switch.skin-switch button + button {
+  border-left: none;
 }
 
 /* ---- Overlay ---- */
