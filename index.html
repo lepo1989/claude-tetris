@@ -25,9 +25,10 @@
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
             <li><kbd>C</kbd><kbd>Shift</kbd> reservar</li>
-            <li><kbd>P</kbd> pausa</li>
+            <li><kbd>P</kbd><kbd>Esc</kbd> pausa</li>
             <li><kbd>M</kbd> puntajes</li>
             <li><kbd>T</kbd> tema</li>
+            <li><kbd>K</kbd> skin</li>
           </ul>
         </div>
       </aside>
@@ -61,6 +62,16 @@
           </div>
         </div>
 
+        <div class="panel-section">
+          <span class="label">SKIN</span>
+          <div class="theme-switch skin-switch" role="group" aria-label="Skin">
+            <button type="button" data-skin-option="retro" aria-pressed="true">RETRO</button>
+            <button type="button" data-skin-option="neon" aria-pressed="false">NEON</button>
+            <button type="button" data-skin-option="pastel" aria-pressed="false">PASTEL</button>
+            <button type="button" data-skin-option="pixel" aria-pressed="false">PIXEL</button>
+          </div>
+        </div>
+
       </aside>
     </div>
 
@@ -69,8 +80,47 @@
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
         <p id="overlay-record"></p>
+        <form id="name-form" class="name-form hidden" autocomplete="off">
+          <label for="name-input" class="label">TU NOMBRE</label>
+          <div class="name-row">
+            <input id="name-input" type="text" maxlength="10" spellcheck="false" placeholder="Tu nombre" />
+            <button id="name-save-btn" type="submit">Guardar</button>
+          </div>
+        </form>
         <ol id="overlay-scores" class="scores hidden"></ol>
+        <p id="overlay-stats" class="stats hidden"></p>
         <button id="restart-btn">Reiniciar</button>
+      </div>
+    </div>
+
+    <div id="pause-menu" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <div class="overlay-box">
+        <p id="pause-title">PAUSA</p>
+        <div class="pause-options">
+          <button type="button" class="menu-item" data-action="resume">Reanudar</button>
+          <button type="button" class="menu-item" data-action="restart">Reiniciar</button>
+          <button type="button" class="menu-item" data-action="controls" aria-expanded="false" aria-controls="pause-controls">Ver controles</button>
+          <ul id="pause-controls" class="pause-controls hidden">
+            <li><span><kbd>←</kbd><kbd>→</kbd></span> mover</li>
+            <li><span><kbd>↑</kbd><kbd>X</kbd></span> rotar</li>
+            <li><span><kbd>↓</kbd></span> bajar (soft drop)</li>
+            <li><span><kbd>Space</kbd></span> caída (hard drop)</li>
+            <li><span><kbd>C</kbd><kbd>Shift</kbd></span> reservar (hold)</li>
+            <li><span><kbd>P</kbd><kbd>Esc</kbd></span> pausa / reanudar</li>
+            <li><span><kbd>M</kbd></span> puntajes</li>
+            <li><span><kbd>T</kbd></span> tema</li>
+          </ul>
+          <div class="menu-item level-item" data-action="level">
+            <span>Nivel inicial</span>
+            <span class="stepper">
+              <button type="button" data-level-step="-1" aria-label="Bajar nivel inicial">&#9664;</button>
+              <output id="start-level-value">1</output>
+              <button type="button" data-level-step="1" aria-label="Subir nivel inicial">&#9654;</button>
+            </span>
+          </div>
+          <p class="level-note">Se aplica a la próxima partida</p>
+        </div>
+        <p class="pause-hint"><kbd>↑</kbd><kbd>↓</kbd> elegir · <kbd>←</kbd><kbd>→</kbd> nivel · <kbd>Enter</kbd> aceptar</p>
       </div>
     </div>
 
@@ -78,7 +128,21 @@
       <div class="overlay-box">
         <p id="scores-title">MEJORES PUNTAJES</p>
         <ol id="scores-list" class="scores"></ol>
+        <p id="scores-stats" class="stats"></p>
         <button id="scores-close-btn" type="button">Cerrar <kbd>M</kbd></button>
+        <button id="scores-reset-btn" class="reset-btn" type="button">Borrar récords</button>
+      </div>
+    </div>
+
+    <div id="start-screen" class="overlay" role="dialog" aria-labelledby="start-title">
+      <div class="overlay-box">
+        <p id="start-title">TETRIS</p>
+        <span class="label">MEJORES PUNTAJES</span>
+        <ol id="start-scores" class="scores"></ol>
+        <p id="start-stats" class="stats"></p>
+        <button id="start-btn" type="button">Jugar</button>
+        <p class="hint"><kbd>Enter</kbd> / <kbd>Space</kbd> para empezar</p>
+        <button id="start-reset-btn" class="reset-btn" type="button">Borrar récords</button>
       </div>
     </div>
   </div>
