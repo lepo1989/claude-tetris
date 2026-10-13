@@ -55,8 +55,20 @@ const themeButtons = document.querySelectorAll('[data-theme-option]');
 const THEME_KEY = 'tetris-theme';
 const SCORES_KEY = 'tetris-highscores';
 const MAX_SCORES = 5;
+const pauseMenu = document.getElementById('pause-menu');
+const menuItems = [...pauseMenu.querySelectorAll('.menu-item')];
+const pauseControls = document.getElementById('pause-controls');
+const controlsBtn = pauseMenu.querySelector('[data-action="controls"]');
+const startLevelEl = document.getElementById('start-level-value');
+const levelStepButtons = pauseMenu.querySelectorAll('[data-level-step]');
+const START_LEVEL_KEY = 'tetris-start-level';
+const MAX_START_LEVEL = 15;
 
-let board, current, next, held, holdUsed, score, lines, level, paused, gameOver, scoresOpen, pausedByScores, clearing, popups, lastTime, dropAccum, dropInterval, lockTimer, lockResets, lowestY, animId;
+let board, current, next, held, holdUsed, score, lines, level, paused, gameOver, scoresOpen, pausedByScores, clearing, popups, lastTime, dropAccum, dropInterval, lockTimer, lockResets, lowestY, animId, menuOpen, menuIndex;
+let startLevel = 1;
+// Teclas pulsadas ahora mismo y las que se ignoran hasta soltarlas (al reanudar)
+const heldKeys = new Set();
+let ignoredKeys = new Set();
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -153,12 +165,17 @@ function clearLines(rows) {
   const points = (LINE_SCORES[rows.length] || 0) * level;
   lines += rows.length;
   score += points;
-  level = Math.floor(lines / 10) + 1;
-  dropInterval = Math.max(100, 1000 - (level - 1) * 90);
+  // sube cada 10 líneas, pero nunca por debajo del nivel inicial elegido
+  level = Math.max(level, Math.floor(lines / 10) + 1);
+  dropInterval = dropIntervalFor(level);
   updateHUD();
   clearing = { rows, elapsed: 0 };
   const midRow = (rows[0] + rows[rows.length - 1] + 1) / 2;
   popups.push({ text: `+${points.toLocaleString()}`, label: LINE_LABELS[rows.length], y: midRow * BLOCK, elapsed: 0 });
+}
+
+function dropIntervalFor(lvl) {
+  return Math.max(100, 1000 - (lvl - 1) * 90);
 }
 
 function finishClear() {
@@ -439,10 +456,17 @@ function closeScores() {
   scoresModal.classList.add('hidden');
   if (pausedByScores) {
     pausedByScores = false;
-    paused = false;
-    lastTime = performance.now();
-    animId = requestAnimationFrame(loop);
+    resumeGame();
   }
+}
+
+// Reanuda el bucle tras una pausa (menú o modal de puntajes)
+function resumeGame() {
+  paused = false;
+  // una tecla que sigue pulsada (p. ej. Space para "Reanudar") no debe mover la pieza al volver
+  ignoredKeys = new Set(heldKeys);
+  lastTime = performance.now();
+  animId = requestAnimationFrame(loop);
 }
 
 function endGame() {
@@ -458,19 +482,82 @@ function endGame() {
   overlay.classList.remove('hidden');
 }
 
+// ---- Menú de pausa (P / Esc) ----
 function togglePause() {
   if (gameOver) return;
-  paused = !paused;
-  if (!paused) {
-    lastTime = performance.now();
-    loop(lastTime);
-  } else {
-    cancelAnimationFrame(animId);
-    overlayTitle.textContent = 'PAUSA';
-    overlayScore.textContent = '';
-    overlayRecord.textContent = '';
-    overlayScores.classList.add('hidden');
-    overlay.classList.remove('hidden');
+  menuOpen ? closePauseMenu() : openPauseMenu();
+}
+
+function openPauseMenu() {
+  paused = true;
+  menuOpen = true;
+  cancelAnimationFrame(animId);
+  menuIndex = 0;
+  showControls(false);
+  renderMenu();
+  pauseMenu.classList.remove('hidden');
+}
+
+function closePauseMenu() {
+  menuOpen = false;
+  pauseMenu.classList.add('hidden');
+  resumeGame();
+}
+
+function showControls(show) {
+  pauseControls.classList.toggle('hidden', !show);
+  controlsBtn.setAttribute('aria-expanded', String(show));
+  controlsBtn.textContent = show ? 'Ocultar controles' : 'Ver controles';
+}
+
+function renderMenu() {
+  menuItems.forEach((item, i) => item.classList.toggle('selected', i === menuIndex));
+  startLevelEl.textContent = startLevel;
+  levelStepButtons.forEach(btn => {
+    btn.disabled = Number(btn.dataset.levelStep) < 0 ? startLevel <= 1 : startLevel >= MAX_START_LEVEL;
+  });
+}
+
+function clampStartLevel(lvl) {
+  return Math.min(MAX_START_LEVEL, Math.max(1, lvl || 1));
+}
+
+function setStartLevel(lvl) {
+  startLevel = clampStartLevel(lvl);
+  try { localStorage.setItem(START_LEVEL_KEY, String(startLevel)); } catch (e) { /* almacenamiento no disponible */ }
+  renderMenu();
+}
+
+function activateMenuItem(i) {
+  menuIndex = i;
+  switch (menuItems[i].dataset.action) {
+    case 'resume': closePauseMenu(); break;
+    case 'restart': init(); break;
+    case 'controls': showControls(pauseControls.classList.contains('hidden')); renderMenu(); break;
+    case 'level': setStartLevel(startLevel >= MAX_START_LEVEL ? 1 : startLevel + 1); break; // Enter: avanza en ciclo
+  }
+}
+
+// Navegación con teclado; el resto de teclas de juego se ignoran con el menú abierto
+function handleMenuKey(e) {
+  switch (e.code) {
+    case 'ArrowUp':
+    case 'ArrowDown':
+      e.preventDefault();
+      menuIndex = (menuIndex + (e.code === 'ArrowDown' ? 1 : -1) + menuItems.length) % menuItems.length;
+      renderMenu();
+      break;
+    case 'ArrowLeft':
+    case 'ArrowRight':
+      e.preventDefault();
+      if (menuItems[menuIndex].dataset.action === 'level') setStartLevel(startLevel + (e.code === 'ArrowRight' ? 1 : -1));
+      break;
+    case 'Enter':
+    case 'NumpadEnter':
+    case 'Space':
+      e.preventDefault();
+      if (!e.repeat) activateMenuItem(menuIndex);
+      break;
   }
 }
 
@@ -500,10 +587,10 @@ function init() {
   board = createBoard();
   score = 0;
   lines = 0;
-  level = 1;
+  level = startLevel;
   paused = false;
   gameOver = false;
-  dropInterval = 1000;
+  dropInterval = dropIntervalFor(level);
   dropAccum = 0;
   lastTime = performance.now();
   held = null;
@@ -516,19 +603,30 @@ function init() {
   scoresOpen = false;
   pausedByScores = false;
   scoresModal.classList.add('hidden');
+  menuOpen = false;
+  pauseMenu.classList.add('hidden');
+  ignoredKeys = new Set(heldKeys);
   cancelAnimationFrame(animId);
   animId = requestAnimationFrame(loop);
 }
 
 document.addEventListener('keydown', e => {
+  if (!e.metaKey) heldKeys.add(e.code); // con Cmd (macOS) el navegador no envía keyup
   if (e.code === 'KeyM') { scoresOpen ? closeScores() : openScores(); return; }
+  // el modal de puntajes queda encima del menú de pausa: Esc lo cierra primero
   if (scoresOpen) {
     if (e.code === 'Escape') closeScores();
     return;
   }
-  if (e.code === 'KeyP') { togglePause(); return; }
+  if (e.code === 'KeyP' || e.code === 'Escape') { if (!e.repeat) togglePause(); return; }
   if (e.code === 'KeyT') { toggleTheme(); return; }
+  if (menuOpen) { handleMenuKey(e); return; }
   if (paused || gameOver || clearing) return;
+  // solo se ignora la auto-repetición de una tecla mantenida desde la pausa; una pulsación nueva vale
+  if (ignoredKeys.has(e.code)) {
+    if (e.repeat) { if (e.code === 'Space') e.preventDefault(); return; }
+    ignoredKeys.delete(e.code);
+  }
   switch (e.code) {
     case 'ArrowLeft':
       tryShift(-1);
@@ -556,7 +654,29 @@ document.addEventListener('keydown', e => {
   updateHUD();
 });
 
+document.addEventListener('keyup', e => {
+  heldKeys.delete(e.code);
+  ignoredKeys.delete(e.code);
+});
+
+// al perder el foco no llegan los keyup: olvidar las teclas pulsadas
+// (ignoredKeys se conserva: solo bloquea repeticiones, nunca una pulsación nueva)
+window.addEventListener('blur', () => heldKeys.clear());
+
 restartBtn.addEventListener('click', init);
+
+menuItems.forEach((item, i) => {
+  item.addEventListener('mouseenter', () => { menuIndex = i; renderMenu(); });
+  if (item.tagName === 'BUTTON') item.addEventListener('click', () => {
+    item.blur(); // evita que Space active el botón
+    activateMenuItem(i);
+  });
+});
+
+levelStepButtons.forEach(btn => btn.addEventListener('click', () => {
+  setStartLevel(startLevel + Number(btn.dataset.levelStep));
+  btn.blur(); // evita que Space active el botón
+}));
 
 scoresCloseBtn.addEventListener('click', () => {
   closeScores();
@@ -572,5 +692,8 @@ themeButtons.forEach(btn => btn.addEventListener('click', () => {
 let savedTheme = null;
 try { savedTheme = localStorage.getItem(THEME_KEY); } catch (e) { /* ignorar */ }
 applyTheme(savedTheme === 'light' ? 'light' : 'dark');
+
+// También fuera de init(): el nivel inicial elegido se mantiene entre partidas y recargas
+try { startLevel = clampStartLevel(Number.parseInt(localStorage.getItem(START_LEVEL_KEY), 10)); } catch (e) { /* ignorar */ }
 
 init();

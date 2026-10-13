@@ -25,7 +25,7 @@
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
             <li><kbd>C</kbd><kbd>Shift</kbd> reservar</li>
-            <li><kbd>P</kbd> pausa</li>
+            <li><kbd>P</kbd><kbd>Esc</kbd> pausa</li>
             <li><kbd>M</kbd> puntajes</li>
             <li><kbd>T</kbd> tema</li>
           </ul>
@@ -71,6 +71,37 @@
         <p id="overlay-record"></p>
         <ol id="overlay-scores" class="scores hidden"></ol>
         <button id="restart-btn">Reiniciar</button>
+      </div>
+    </div>
+
+    <div id="pause-menu" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <div class="overlay-box">
+        <p id="pause-title">PAUSA</p>
+        <div class="pause-options">
+          <button type="button" class="menu-item" data-action="resume">Reanudar</button>
+          <button type="button" class="menu-item" data-action="restart">Reiniciar</button>
+          <button type="button" class="menu-item" data-action="controls" aria-expanded="false" aria-controls="pause-controls">Ver controles</button>
+          <ul id="pause-controls" class="pause-controls hidden">
+            <li><span><kbd>←</kbd><kbd>→</kbd></span> mover</li>
+            <li><span><kbd>↑</kbd><kbd>X</kbd></span> rotar</li>
+            <li><span><kbd>↓</kbd></span> bajar (soft drop)</li>
+            <li><span><kbd>Space</kbd></span> caída (hard drop)</li>
+            <li><span><kbd>C</kbd><kbd>Shift</kbd></span> reservar (hold)</li>
+            <li><span><kbd>P</kbd><kbd>Esc</kbd></span> pausa / reanudar</li>
+            <li><span><kbd>M</kbd></span> puntajes</li>
+            <li><span><kbd>T</kbd></span> tema</li>
+          </ul>
+          <div class="menu-item level-item" data-action="level">
+            <span>Nivel inicial</span>
+            <span class="stepper">
+              <button type="button" data-level-step="-1" aria-label="Bajar nivel inicial">&#9664;</button>
+              <output id="start-level-value">1</output>
+              <button type="button" data-level-step="1" aria-label="Subir nivel inicial">&#9654;</button>
+            </span>
+          </div>
+          <p class="level-note">Se aplica a la próxima partida</p>
+        </div>
+        <p class="pause-hint"><kbd>↑</kbd><kbd>↓</kbd> elegir · <kbd>←</kbd><kbd>→</kbd> nivel · <kbd>Enter</kbd> aceptar</p>
       </div>
     </div>
 
