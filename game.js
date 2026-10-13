@@ -67,12 +67,26 @@ const restartBtn = document.getElementById('restart-btn');
 const scoresModal = document.getElementById('scores-modal');
 const scoresList = document.getElementById('scores-list');
 const scoresCloseBtn = document.getElementById('scores-close-btn');
+const scoresStats = document.getElementById('scores-stats');
+const scoresResetBtn = document.getElementById('scores-reset-btn');
+const overlayStats = document.getElementById('overlay-stats');
+const nameForm = document.getElementById('name-form');
+const nameInput = document.getElementById('name-input');
+const nameSaveBtn = document.getElementById('name-save-btn');
+const startScreen = document.getElementById('start-screen');
+const startScores = document.getElementById('start-scores');
+const startStats = document.getElementById('start-stats');
+const startBtn = document.getElementById('start-btn');
+const startResetBtn = document.getElementById('start-reset-btn');
 const themeButtons = document.querySelectorAll('[data-theme-option]');
 const skinButtons = document.querySelectorAll('[data-skin-option]');
 const THEME_KEY = 'tetris-theme';
 const SKIN_KEY = 'tetris-skin';
 const SCORES_KEY = 'tetris-highscores';
+const STATS_KEY = 'tetris-stats';        // récords históricos { bestCombo, maxLines }
+const PLAYER_NAME_KEY = 'tetris-player-name';
 const MAX_SCORES = 5;
+const MAX_NAME_LEN = 10;
 const pauseMenu = document.getElementById('pause-menu');
 const menuItems = [...pauseMenu.querySelectorAll('.menu-item')];
 const pauseControls = document.getElementById('pause-controls');
@@ -84,7 +98,8 @@ const MAX_START_LEVEL = 15;
 
 let skinName = 'retro'; // skin activa (clave de SKINS)
 const spriteCache = new Map(); // bloques ya dibujados por skin/color/tamaño
-let board, current, next, held, holdUsed, score, lines, level, paused, gameOver, scoresOpen, pausedByScores, clearing, popups, lastTime, dropAccum, dropInterval, lockTimer, lockResets, lowestY, animId, menuOpen, menuIndex;
+let started = false; // false mientras se muestra la pantalla de inicio
+let board, current, next, held, holdUsed, score, lines, level, combo, maxCombo, pendingScore, paused, gameOver, scoresOpen, pausedByScores, clearing, popups, lastTime, dropAccum, dropInterval, lockTimer, lockResets, lowestY, animId, menuOpen, menuIndex;
 let startLevel = 1;
 // Teclas pulsadas ahora mismo y las que se ignoran hasta soltarlas (al reanudar)
 const heldKeys = new Set();
@@ -188,10 +203,14 @@ function clearLines(rows) {
   // sube cada 10 líneas, pero nunca por debajo del nivel inicial elegido
   level = Math.max(level, Math.floor(lines / 10) + 1);
   dropInterval = dropIntervalFor(level);
+  // combo: piezas consecutivas que borran al menos una línea
+  combo++;
+  maxCombo = Math.max(maxCombo, combo);
   updateHUD();
   clearing = { rows, elapsed: 0 };
   const midRow = (rows[0] + rows[rows.length - 1] + 1) / 2;
-  popups.push({ text: `+${points.toLocaleString()}`, label: LINE_LABELS[rows.length], y: midRow * BLOCK, elapsed: 0 });
+  const label = LINE_LABELS[rows.length] + (combo > 1 ? ` · COMBO x${combo}` : '');
+  popups.push({ text: `+${points.toLocaleString()}`, label, y: midRow * BLOCK, elapsed: 0 });
 }
 
 function dropIntervalFor(lvl) {
@@ -235,7 +254,10 @@ function lockPiece() {
   merge();
   const rows = fullRows();
   if (rows.length) clearLines(rows); // spawn() tras la animación
-  else spawn();
+  else {
+    combo = 0;
+    spawn();
+  }
 }
 
 function spawn() {
@@ -401,7 +423,7 @@ function draw() {
 
   if (clearing) {
     drawClearing();
-  } else if (!gameOver) {
+  } else if (!gameOver && current) {
     drawPiece(); // en game over no se pinta la pieza que ya no cabe
   }
   drawPopups();
@@ -490,7 +512,9 @@ function applyTheme(theme) {
   try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* almacenamiento no disponible */ }
   themeButtons.forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.themeOption === theme)));
   // repintar aunque el bucle esté detenido (pausa / game over)
-  if (current) { draw(); drawNext(); drawHold(); }
+  // (también en la pantalla de inicio, con el tablero vacío)
+  if (board) draw();
+  if (current) { drawNext(); drawHold(); }
 }
 
 function toggleTheme() {
@@ -504,7 +528,9 @@ function applySkin(name) {
   try { localStorage.setItem(SKIN_KEY, name); } catch (e) { /* almacenamiento no disponible */ }
   skinButtons.forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.skinOption === name)));
   // repintar aunque el bucle esté detenido (pausa / game over)
-  if (current) { draw(); drawNext(); drawHold(); }
+  // (también en la pantalla de inicio, con el tablero vacío)
+  if (board) draw();
+  if (current) { drawNext(); drawHold(); }
 }
 
 function cycleSkin() {
@@ -512,7 +538,9 @@ function cycleSkin() {
   applySkin(SKIN_ORDER[(i + 1) % SKIN_ORDER.length]);
 }
 
-// ---- Máximos puntajes (localStorage) ----
+// ---- Tabla de récords (localStorage) ----
+// Entradas: { name, score, lines, level, maxCombo, date }. Las antiguas sin
+// nombre ni combo se siguen mostrando ("---" y 0).
 function loadScores() {
   try {
     const list = JSON.parse(localStorage.getItem(SCORES_KEY));
@@ -522,16 +550,60 @@ function loadScores() {
   }
 }
 
-// Guarda la partida si entra en el top; devuelve su posición o -1
-function saveScore() {
-  if (score <= 0) return -1;
-  const entry = { score, lines, level, date: Date.now() };
+// ¿Entra esta puntuación en el top MAX_SCORES?
+function qualifies(pts) {
+  if (pts <= 0) return false;
+  const list = loadScores();
+  return list.length < MAX_SCORES || pts > list[list.length - 1].score;
+}
+
+// Guarda la entrada si entra en el top; devuelve su posición o -1
+function saveScore(entry) {
   const list = loadScores();
   list.push(entry);
   list.sort((a, b) => b.score - a.score);
   list.length = Math.min(list.length, MAX_SCORES);
   try { localStorage.setItem(SCORES_KEY, JSON.stringify(list)); } catch (e) { /* almacenamiento no disponible */ }
   return list.indexOf(entry);
+}
+
+// Mejor combo y máximo de líneas de todas las partidas (entren o no en el top)
+function loadStats() {
+  let stored = null;
+  try { stored = JSON.parse(localStorage.getItem(STATS_KEY)); } catch (e) { /* ignorar */ }
+  const stats = {
+    bestCombo: Number.isFinite(stored?.bestCombo) ? stored.bestCombo : 0,
+    maxLines: Number.isFinite(stored?.maxLines) ? stored.maxLines : 0,
+  };
+  // compatibilidad: récords guardados antes de que existiera tetris-stats
+  for (const s of loadScores()) {
+    stats.bestCombo = Math.max(stats.bestCombo, Number(s.maxCombo) || 0);
+    stats.maxLines = Math.max(stats.maxLines, Number(s.lines) || 0);
+  }
+  return stats;
+}
+
+function saveStats() {
+  const stats = loadStats();
+  stats.bestCombo = Math.max(stats.bestCombo, maxCombo);
+  stats.maxLines = Math.max(stats.maxLines, lines);
+  try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) { /* almacenamiento no disponible */ }
+}
+
+function loadPlayerName() {
+  try { return localStorage.getItem(PLAYER_NAME_KEY) || ''; } catch (e) { return ''; }
+}
+
+function resetRecords() {
+  if (!confirm('¿Borrar todos los récords? Esta acción no se puede deshacer.')) return;
+  try {
+    localStorage.removeItem(SCORES_KEY);
+    localStorage.removeItem(STATS_KEY);
+  } catch (e) { /* almacenamiento no disponible */ }
+  renderRecords(startScores, startStats, -1);
+  renderRecords(scoresList, scoresStats, -1);
+  // Game Over detrás del modal: refrescar su tabla (la partida pendiente sigue entrando)
+  if (gameOver) renderRecords(overlayScores, overlayStats, -1);
 }
 
 function renderScores(listEl, highlight) {
@@ -547,18 +619,40 @@ function renderScores(listEl, highlight) {
   list.forEach((s, i) => {
     const li = document.createElement('li');
     if (i === highlight) li.className = 'highlight';
+    const n = Number(s.lines) || 0, c = Number(s.maxCombo) || 0;
     const rank = document.createElement('span');
     rank.className = 'rank';
     rank.textContent = `${i + 1}.`;
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = (typeof s.name === 'string' && s.name.trim()) ? s.name : '---';
     const pts = document.createElement('span');
     pts.className = 'pts';
     pts.textContent = s.score.toLocaleString();
     const meta = document.createElement('span');
     meta.className = 'meta';
-    meta.textContent = `L${s.lines} · N${s.level}`;
-    li.append(rank, pts, meta);
+    meta.textContent = `L${n} · C${c}`;
+    meta.title = `Líneas: ${n} · Nivel: ${Number(s.level) || 1} · Mejor combo: ${c}`;
+    li.append(rank, name, pts, meta);
     listEl.append(li);
   });
+}
+
+function renderStats(el) {
+  const { bestCombo, maxLines } = loadStats();
+  el.replaceChildren();
+  for (const [label, value] of [['Mejor combo', `x${bestCombo}`], ['Máx. líneas', maxLines]]) {
+    const item = document.createElement('span');
+    const strong = document.createElement('strong');
+    strong.textContent = value;
+    item.append(`${label}: `, strong);
+    el.append(item);
+  }
+}
+
+function renderRecords(listEl, statsEl, highlight) {
+  renderScores(listEl, highlight);
+  renderStats(statsEl);
 }
 
 // Modal de puntajes (tecla M): pausa el juego mientras está abierto
@@ -570,7 +664,7 @@ function openScores() {
     pausedByScores = true;
     cancelAnimationFrame(animId);
   }
-  renderScores(scoresList, -1);
+  renderRecords(scoresList, scoresStats, -1);
   scoresModal.classList.remove('hidden');
 }
 
@@ -597,13 +691,42 @@ function endGame() {
   if (gameOver) return;
   gameOver = true;
   cancelAnimationFrame(animId);
-  const rank = saveScore();
+  saveStats(); // récords históricos, aunque la partida no entre en el top
   overlayTitle.textContent = 'GAME OVER';
-  overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
-  overlayRecord.textContent = rank === 0 ? '¡Nuevo récord!' : '';
-  renderScores(overlayScores, rank);
+  overlayScore.textContent = `Puntuación: ${score.toLocaleString()} · Líneas: ${lines} · Combo: x${maxCombo}`;
+  if (qualifies(score)) {
+    // entra en el top: pedir el nombre antes de guardarla
+    pendingScore = { score, lines, level, maxCombo, date: Date.now() };
+    const list = loadScores();
+    overlayRecord.textContent = (!list.length || score > list[0].score) ? '¡Nuevo récord!' : `¡Entras en el top ${MAX_SCORES}!`;
+    nameInput.value = loadPlayerName();
+    nameForm.classList.remove('hidden');
+  } else {
+    pendingScore = null;
+    overlayRecord.textContent = '';
+    nameForm.classList.add('hidden');
+  }
+  renderRecords(overlayScores, overlayStats, -1);
   overlayScores.classList.remove('hidden');
+  overlayStats.classList.remove('hidden');
   overlay.classList.remove('hidden');
+  if (pendingScore) {
+    nameInput.focus();
+    nameInput.select();
+  }
+}
+
+// Guarda la puntuación pendiente con el nombre escrito; devuelve su posición o -1
+function commitPendingScore() {
+  if (!pendingScore) return -1;
+  const name = nameInput.value.trim().slice(0, MAX_NAME_LEN) || '---';
+  if (name !== '---') {
+    try { localStorage.setItem(PLAYER_NAME_KEY, name); } catch (e) { /* almacenamiento no disponible */ }
+  }
+  const rank = saveScore({ name, ...pendingScore });
+  pendingScore = null;
+  nameForm.classList.add('hidden');
+  return rank;
 }
 
 // ---- Menú de pausa (P / Esc) ----
@@ -708,10 +831,15 @@ function loop(ts) {
 }
 
 function init() {
+  commitPendingScore(); // reiniciar sin pulsar "Guardar" no pierde el récord
+  started = true;
+  startScreen.classList.add('hidden');
   board = createBoard();
   score = 0;
   lines = 0;
   level = startLevel;
+  combo = 0;
+  maxCombo = 0;
   paused = false;
   gameOver = false;
   dropInterval = dropIntervalFor(level);
@@ -724,6 +852,8 @@ function init() {
   spawn();
   updateHUD();
   overlay.classList.add('hidden');
+  nameForm.classList.add('hidden');
+  overlayStats.classList.add('hidden');
   scoresOpen = false;
   pausedByScores = false;
   scoresModal.classList.add('hidden');
@@ -735,7 +865,21 @@ function init() {
 }
 
 document.addEventListener('keydown', e => {
+  // escribiendo el nombre: las teclas no controlan el juego
+  if (e.target instanceof HTMLInputElement) return;
   if (!e.metaKey) heldKeys.add(e.code); // con Cmd (macOS) el navegador no envía keyup
+  if (!started) {
+    // pantalla de inicio: solo empezar o cambiar el tema / la skin
+    if (e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Space') {
+      e.preventDefault();
+      init();
+    } else if (e.code === 'KeyT') {
+      toggleTheme();
+    } else if (e.code === 'KeyK' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      cycleSkin();
+    }
+    return;
+  }
   if (e.code === 'KeyM') { scoresOpen ? closeScores() : openScores(); return; }
   // el modal de puntajes queda encima del menú de pausa: Esc lo cierra primero
   if (scoresOpen) {
@@ -791,7 +935,30 @@ document.addEventListener('keyup', e => {
 // (ignoredKeys se conserva: solo bloquea repeticiones, nunca una pulsación nueva)
 window.addEventListener('blur', () => heldKeys.clear());
 
-restartBtn.addEventListener('click', init);
+restartBtn.addEventListener('click', () => {
+  init();
+  restartBtn.blur();
+});
+
+startBtn.addEventListener('click', () => {
+  startBtn.blur();
+  if (!started) init();
+});
+
+nameForm.addEventListener('submit', e => {
+  e.preventDefault();
+  if (!pendingScore) return; // doble Enter / doble clic: ya guardada
+  const rank = commitPendingScore();
+  overlayRecord.textContent = rank === 0 ? '¡Nuevo récord!' : rank > 0 ? `¡Puesto ${rank + 1} del top ${MAX_SCORES}!` : '';
+  renderRecords(overlayScores, overlayStats, rank);
+  nameInput.blur();
+  nameSaveBtn.blur();
+});
+
+[startResetBtn, scoresResetBtn].forEach(btn => btn.addEventListener('click', () => {
+  btn.blur();
+  resetRecords();
+}));
 
 menuItems.forEach((item, i) => {
   item.addEventListener('mouseenter', () => { menuIndex = i; renderMenu(); });
@@ -828,9 +995,12 @@ try {
   savedSkin = localStorage.getItem(SKIN_KEY);
 } catch (e) { /* ignorar */ }
 applyTheme(savedTheme === 'light' ? 'light' : 'dark');
+// Pantalla de inicio: tablero vacío y sin bucle hasta pulsar "Jugar"
+board = createBoard();
+popups = [];
+clearing = null;
 applySkin(savedSkin);
+renderRecords(startScores, startStats, -1);
 
 // También fuera de init(): el nivel inicial elegido se mantiene entre partidas y recargas
 try { startLevel = clampStartLevel(Number.parseInt(localStorage.getItem(START_LEVEL_KEY), 10)); } catch (e) { /* ignorar */ }
-
-init();
