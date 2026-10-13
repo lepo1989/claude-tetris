@@ -30,6 +30,8 @@ const LINE_SCORES = [0, 100, 300, 500, 800];
 const LINE_LABELS = ['', 'SINGLE', 'DOUBLE', 'TRIPLE', 'TETRIS!'];
 const CLEAR_MS = 350;  // duración de la animación de borrado de líneas
 const POPUP_MS = 1000; // duración del texto flotante con los puntos
+const LOCK_DELAY_MS = 500;   // margen en el suelo antes de fijar la pieza (0 = sin margen)
+const MAX_LOCK_RESETS = 15;  // movimientos/giros en el suelo que reinician ese margen
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
@@ -54,7 +56,7 @@ const THEME_KEY = 'tetris-theme';
 const SCORES_KEY = 'tetris-highscores';
 const MAX_SCORES = 5;
 
-let board, current, next, held, holdUsed, score, lines, level, paused, gameOver, scoresOpen, pausedByScores, clearing, popups, lastTime, dropAccum, dropInterval, animId;
+let board, current, next, held, holdUsed, score, lines, level, paused, gameOver, scoresOpen, pausedByScores, clearing, popups, lastTime, dropAccum, dropInterval, lockTimer, lockResets, lowestY, animId;
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -98,9 +100,38 @@ function tryRotate() {
     if (!collide(rotated, current.x + kick, current.y)) {
       current.shape = rotated;
       current.x += kick;
+      onPieceMoved();
       return;
     }
   }
+}
+
+function tryShift(dx) {
+  if (collide(current.shape, current.x + dx, current.y)) return;
+  current.x += dx;
+  onPieceMoved();
+}
+
+// ---- Lock delay ----
+// La pieza que toca el suelo espera LOCK_DELAY_MS antes de fijarse. Mover o
+// rotar en el suelo reinicia la espera hasta MAX_LOCK_RESETS veces; bajar a
+// una fila nueva devuelve todos los reinicios (evita bloquear el juego girando).
+function resetLock() {
+  lockTimer = 0;
+  lockResets = 0;
+  lowestY = current.y;
+}
+
+function onPieceMoved() {
+  if (lockTimer > 0 && lockResets < MAX_LOCK_RESETS) {
+    lockTimer = 0;
+    lockResets++;
+  }
+}
+
+function stepDown() {
+  current.y++;
+  if (current.y > lowestY) resetLock();
 }
 
 function merge() {
@@ -153,13 +184,13 @@ function hardDrop() {
   lockPiece();
 }
 
+// En el suelo no fija la pieza: eso lo hace el lock delay (o el hard drop)
 function softDrop() {
   if (!collide(current.shape, current.x, current.y + 1)) {
-    current.y++;
+    stepDown();
+    dropAccum = 0;
     score += 1;
     updateHUD();
-  } else {
-    lockPiece();
   }
 }
 
@@ -174,6 +205,7 @@ function spawn() {
   current = next;
   next = randomPiece();
   holdUsed = false;
+  resetLock();
   if (collide(current.shape, current.x, current.y)) {
     endGame();
   }
@@ -187,6 +219,7 @@ function holdPiece() {
   const type = current.type;
   if (held) {
     current = createPiece(held);
+    resetLock();
     if (collide(current.shape, current.x, current.y)) endGame();
   } else {
     spawn();
@@ -450,13 +483,13 @@ function loop(ts) {
     // la gravedad se detiene mientras se borran las líneas
     clearing.elapsed += dt;
     if (clearing.elapsed >= CLEAR_MS) finishClear();
+  } else if (collide(current.shape, current.x, current.y + 1)) {
+    // en el suelo: margen para corregir la posición antes de fijarla
+    dropAccum = 0;
+    if ((lockTimer += dt) >= LOCK_DELAY_MS) lockPiece();
   } else if ((dropAccum += dt) >= dropInterval) {
     dropAccum = 0;
-    if (!collide(current.shape, current.x, current.y + 1)) {
-      current.y++;
-    } else {
-      lockPiece();
-    }
+    stepDown();
   }
   draw();
   // endGame() puede haberse llamado en este frame: no volver a programar el bucle
@@ -498,10 +531,10 @@ document.addEventListener('keydown', e => {
   if (paused || gameOver || clearing) return;
   switch (e.code) {
     case 'ArrowLeft':
-      if (!collide(current.shape, current.x - 1, current.y)) current.x--;
+      tryShift(-1);
       break;
     case 'ArrowRight':
-      if (!collide(current.shape, current.x + 1, current.y)) current.x++;
+      tryShift(1);
       break;
     case 'ArrowDown':
       softDrop();

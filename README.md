@@ -38,6 +38,7 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - Las **7 piezas estándar** (I, O, T, S, Z, J, L) con colores diferenciados.
 - **Rotación** con _wall kicks_ básicos (pequeños desplazamientos para que la pieza pueda rotar pegada a la pared).
 - **Soft drop** (bajada acelerada) y **hard drop** (caída instantánea).
+- **Lock delay**: al tocar el suelo la pieza espera medio segundo (`LOCK_DELAY_MS`) antes de fijarse, para poder moverla o rotarla. Cada movimiento en el suelo reinicia la espera, hasta `MAX_LOCK_RESETS` veces. El hard drop la fija al instante.
 - **Pieza fantasma** (_ghost piece_): muestra dónde aterrizará la pieza actual.
 - **Vista previa** de la siguiente pieza.
 - **Hold** (reserva): guarda la pieza actual con `C` o `Shift` para usarla más tarde, o intercámbiala con la ya guardada. Solo se puede usar una vez por pieza; el slot se atenúa mientras está bloqueado.
@@ -188,6 +189,8 @@ Algunos parámetros fáciles de tunear en `game.js`:
 | `COLORS`       | Paleta de colores por tipo de pieza      | 7 colores             |
 | `LINE_SCORES`  | Puntos por 1, 2, 3 o 4 líneas eliminadas | `[0,100,300,500,800]` |
 | `dropInterval` | Velocidad inicial de caída en ms         | `1000`                |
+| `LOCK_DELAY_MS` | Espera en el suelo antes de fijar la pieza (ms) | `500`          |
+| `MAX_LOCK_RESETS` | Movimientos en el suelo que reinician esa espera | `15`        |
 
 > Si cambias `COLS`, `ROWS` o `BLOCK`, recuerda ajustar también `width` y `height` del `<canvas id="board">` en `index.html` para que coincida (`COLS × BLOCK` × `ROWS × BLOCK`).
 
