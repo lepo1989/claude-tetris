@@ -37,6 +37,28 @@
   --danger: #d32f2f;
 }
 
+/* ---- Fondos de canvas por skin y tema ----
+   (:root[...] gana en especificidad a [data-theme="light"]) */
+:root[data-skin="neon"] {
+  --canvas-bg: #000000;
+  --grid: #10101c;
+}
+
+:root[data-skin="neon"][data-theme="light"] {
+  --canvas-bg: #f6f4ff;
+  --grid: #e6e1f7;
+}
+
+:root[data-skin="pastel"] {
+  --canvas-bg: #1f1c2b;
+  --grid: #2a2638;
+}
+
+:root[data-skin="pastel"][data-theme="light"] {
+  --canvas-bg: #fffafc;
+  --grid: #f3e9ef;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -211,6 +233,29 @@ kbd {
 .theme-switch button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
+}
+
+/* Skin: 4 opciones en rejilla 2×2 */
+.skin-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.skin-switch button {
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.skin-switch button + button {
+  border-left: none;
+}
+
+.skin-switch button:nth-child(even) {
+  border-left: 1px solid var(--border);
+}
+
+.skin-switch button:nth-child(n+3) {
+  border-top: 1px solid var(--border);
 }
 
 /* ---- Overlay ---- */
